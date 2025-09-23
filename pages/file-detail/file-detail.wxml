@@ -1,0 +1,125 @@
+<!--pages/file-detail/file-detail.wxml-->
+<view class="container">
+  <view class="file-header">
+    <image class="file-icon" src="{{fileIcon}}" mode="aspectFit"></image>
+    <view class="file-info">
+      <view class="file-name">{{fileData.name}}</view>
+      <view class="file-meta">
+        <text class="file-size">{{formattedSize}}</text>
+        <text class="file-type">{{fileData.type.toUpperCase()}}</text>
+      </view>
+    </view>
+    <view class="file-status status-{{fileData.status}}">
+      {{statusText}}
+    </view>
+  </view>
+
+  <!-- 文件预览区域 -->
+  <view class="preview-section" wx:if="{{canPreview}}">
+    <view class="section-title">文件预览</view>
+    <view class="preview-container" bind:tap="previewFile">
+      <image wx:if="{{isImage}}" class="preview-image" src="{{fileData.path}}" mode="aspectFit"></image>
+      <view wx:else class="preview-placeholder">
+        <image class="preview-icon" src="{{fileIcon}}"></image>
+        <text>点击预览文件</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 处理选项 -->
+  <view class="actions-section">
+    <view class="section-title">可用操作</view>
+    <view class="actions-grid">
+      <!-- 图片压缩 -->
+      <button class="action-item" wx:if="{{isImage}}" bind:tap="compressImage">
+        <image class="action-icon" src="/images/icons/compress.png"></image>
+        <view class="action-name">压缩图片</view>
+        <view class="action-desc">减小文件大小</view>
+      </button>
+
+      <!-- 解压缩 -->
+      <button class="action-item" wx:if="{{isArchive}}" bind:tap="extractArchive">
+        <image class="action-icon" src="/images/icons/unzip.png"></image>
+        <view class="action-name">解压缩</view>
+        <view class="action-desc">提取压缩包内容</view>
+      </button>
+
+      <!-- PDF转图片 -->
+      <button class="action-item" wx:if="{{isPdf}}" bind:tap="convertPdfToImages">
+        <image class="action-icon" src="/images/icons/convert.png"></image>
+        <view class="action-name">转为图片</view>
+        <view class="action-desc">按页转换为图片</view>
+      </button>
+
+      <!-- 格式转换 -->
+      <button class="action-item" wx:if="{{canConvert}}" bind:tap="showConvertOptions">
+        <image class="action-icon" src="/images/icons/convert.png"></image>
+        <view class="action-name">格式转换</view>
+        <view class="action-desc">转换为其他格式</view>
+      </button>
+    </view>
+  </view>
+
+  <!-- 分享和保存 -->
+  <view class="share-section">
+    <view class="section-title">分享和保存</view>
+    <view class="share-actions">
+      <button class="share-btn primary" bind:tap="shareToChat">
+        <image class="btn-icon" src="/images/icons/share.png"></image>
+        <text>分享到聊天</text>
+      </button>
+      <button class="share-btn secondary" wx:if="{{isImage}}" bind:tap="saveToAlbum">
+        <image class="btn-icon" src="/images/icons/save.png"></image>
+        <text>保存到相册</text>
+      </button>
+      <button class="share-btn secondary" bind:tap="deleteFile">
+        <image class="btn-icon" src="/images/icons/delete.png"></image>
+        <text>删除文件</text>
+      </button>
+    </view>
+  </view>
+
+  <!-- 处理历史 -->
+  <view class="history-section" wx:if="{{processHistory.length > 0}}">
+    <view class="section-title">处理历史</view>
+    <view class="history-list">
+      <view class="history-item" wx:for="{{processHistory}}" wx:key="id">
+        <view class="history-time">{{item.timeText}}</view>
+        <view class="history-action">{{item.actionText}}</view>
+        <view class="history-result status-{{item.status}}">{{item.resultText}}</view>
+      </view>
+    </view>
+  </view>
+</view>
+
+<!-- 格式转换选项弹窗 -->
+<view class="modal-overlay" wx:if="{{showConvertModal}}" bind:tap="hideConvertOptions">
+  <view class="modal-content" catch:tap="stopPropagation">
+    <view class="modal-title">选择转换格式</view>
+    <view class="convert-options">
+      <button class="convert-option" wx:for="{{convertOptions}}" wx:key="format" 
+              bind:tap="convertToFormat" data-format="{{item.format}}">
+        <image class="option-icon" src="{{item.icon}}"></image>
+        <view class="option-text">
+          <view class="option-name">{{item.name}}</view>
+          <view class="option-desc">{{item.description}}</view>
+        </view>
+      </button>
+    </view>
+    <button class="modal-close" bind:tap="hideConvertOptions">取消</button>
+  </view>
+</view>
+
+<!-- 加载遮罩 -->
+<view class="loading-overlay" wx:if="{{processing}}">
+  <view class="loading-content">
+    <view class="loading-spinner"></view>
+    <view class="loading-text">{{processingText}}</view>
+    <view class="loading-progress" wx:if="{{progress > 0}}">
+      <view class="progress-bar">
+        <view class="progress-fill" style="width: {{progress}}%"></view>
+      </view>
+      <view class="progress-text">{{progress}}%</view>
+    </view>
+  </view>
+</view>

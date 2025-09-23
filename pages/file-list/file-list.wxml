@@ -1,0 +1,178 @@
+<!--pages/file-list/file-list.wxml-->
+<view class="container">
+  <view class="header">
+    <view class="header-content">
+      <view class="title">文件管理</view>
+      <view class="file-count">共 {{filteredFiles.length}} 个文件</view>
+    </view>
+    <button class="add-btn" bind:tap="addFiles">
+      <image class="add-icon" src="/images/icons/add.png"></image>
+    </button>
+  </view>
+
+  <!-- 搜索和筛选 -->
+  <view class="search-section">
+    <view class="search-bar">
+      <image class="search-icon" src="/images/icons/search.png"></image>
+      <input class="search-input" placeholder="搜索文件名..." value="{{searchKeyword}}" 
+             bind:input="onSearchInput" />
+      <button class="filter-btn" bind:tap="showFilterOptions">
+        <image class="filter-icon" src="/images/icons/filter.png"></image>
+      </button>
+    </view>
+    
+    <scroll-view class="filter-tabs" scroll-x="true" wx:if="{{filterOptions.length > 0}}">
+      <view class="filter-tab {{currentFilter === 'all' ? 'active' : ''}}" 
+            bind:tap="setFilter" data-filter="all">
+        全部 ({{allFiles.length}})
+      </view>
+      <view class="filter-tab {{currentFilter === item.value ? 'active' : ''}}" 
+            wx:for="{{filterOptions}}" wx:key="value"
+            bind:tap="setFilter" data-filter="{{item.value}}">
+        {{item.label}} ({{item.count}})
+      </view>
+    </scroll-view>
+  </view>
+
+  <!-- 文件列表 -->
+  <view class="file-list" wx:if="{{filteredFiles.length > 0}}">
+    <view class="file-item" wx:for="{{filteredFiles}}" wx:key="id" 
+          bind:tap="openFile" data-file="{{item}}">
+      <view class="file-left">
+        <image class="file-icon" src="{{item.icon}}" mode="aspectFit"></image>
+        <view class="file-info">
+          <view class="file-name">{{item.name}}</view>
+          <view class="file-meta">
+            <text class="file-size">{{item.formattedSize}}</text>
+            <text class="file-time">{{item.timeText}}</text>
+            <text class="file-source">{{item.sourceText}}</text>
+          </view>
+        </view>
+      </view>
+      
+      <view class="file-actions">
+        <view class="file-status status-{{item.status}}">
+          {{item.statusText}}
+        </view>
+        <button class="action-menu-btn" catch:tap="showActionMenu" data-file="{{item}}">
+          <image class="menu-icon" src="/images/icons/more.png"></image>
+        </button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-state" wx:else>
+    <image class="empty-icon" src="/images/icons/empty.png"></image>
+    <view class="empty-title">{{emptyStateTitle}}</view>
+    <view class="empty-desc">{{emptyStateDesc}}</view>
+    <button class="empty-action-btn" bind:tap="addFiles">添加文件</button>
+  </view>
+
+  <!-- 底部操作栏 -->
+  <view class="bottom-actions" wx:if="{{selectedFiles.length > 0}}">
+    <view class="selected-info">
+      已选择 {{selectedFiles.length}} 个文件
+    </view>
+    <view class="batch-actions">
+      <button class="batch-btn" bind:tap="batchDelete">删除</button>
+      <button class="batch-btn" bind:tap="batchShare">分享</button>
+      <button class="batch-btn" bind:tap="clearSelection">取消</button>
+    </view>
+  </view>
+</view>
+
+<!-- 操作菜单 -->
+<view class="action-menu-overlay" wx:if="{{showActionMenu}}" bind:tap="hideActionMenu">
+  <view class="action-menu" catch:tap="stopPropagation">
+    <view class="menu-title">{{currentFile.name}}</view>
+    <view class="menu-actions">
+      <button class="menu-item" bind:tap="previewFile">
+        <image class="menu-icon" src="/images/icons/preview.png"></image>
+        <text>预览</text>
+      </button>
+      <button class="menu-item" bind:tap="shareFile">
+        <image class="menu-icon" src="/images/icons/share.png"></image>
+        <text>分享</text>
+      </button>
+      <button class="menu-item" bind:tap="renameFile">
+        <image class="menu-icon" src="/images/icons/rename.png"></image>
+        <text>重命名</text>
+      </button>
+      <button class="menu-item danger" bind:tap="deleteFile">
+        <image class="menu-icon" src="/images/icons/delete.png"></image>
+        <text>删除</text>
+      </button>
+    </view>
+  </view>
+</view>
+
+<!-- 筛选选项弹窗 -->
+<view class="modal-overlay" wx:if="{{showFilterModal}}" bind:tap="hideFilterOptions">
+  <view class="modal-content" catch:tap="stopPropagation">
+    <view class="modal-title">筛选文件</view>
+    
+    <view class="filter-section">
+      <view class="filter-label">文件类型</view>
+      <view class="filter-chips">
+        <view class="filter-chip {{typeFilter === 'all' ? 'active' : ''}}" 
+              bind:tap="setTypeFilter" data-type="all">
+          全部
+        </view>
+        <view class="filter-chip {{typeFilter === item ? 'active' : ''}}" 
+              wx:for="{{fileTypes}}" wx:key="*this"
+              bind:tap="setTypeFilter" data-type="{{item}}">
+          {{item.toUpperCase()}}
+        </view>
+      </view>
+    </view>
+
+    <view class="filter-section">
+      <view class="filter-label">文件来源</view>
+      <view class="filter-chips">
+        <view class="filter-chip {{sourceFilter === 'all' ? 'active' : ''}}" 
+              bind:tap="setSourceFilter" data-source="all">
+          全部
+        </view>
+        <view class="filter-chip {{sourceFilter === 'chat' ? 'active' : ''}}" 
+              bind:tap="setSourceFilter" data-source="chat">
+          聊天记录
+        </view>
+        <view class="filter-chip {{sourceFilter === 'local' ? 'active' : ''}}" 
+              bind:tap="setSourceFilter" data-source="local">
+          本地选择
+        </view>
+        <view class="filter-chip {{sourceFilter === 'processed' ? 'active' : ''}}" 
+              bind:tap="setSourceFilter" data-source="processed">
+          处理结果
+        </view>
+      </view>
+    </view>
+
+    <view class="filter-section">
+      <view class="filter-label">排序方式</view>
+      <picker class="sort-picker" range="{{sortOptions}}" range-key="label" 
+              value="{{sortIndex}}" bind:change="setSortOption">
+        <view class="picker-text">{{sortOptions[sortIndex].label}}</view>
+      </picker>
+    </view>
+
+    <view class="modal-actions">
+      <button class="modal-btn secondary" bind:tap="resetFilters">重置</button>
+      <button class="modal-btn primary" bind:tap="applyFilters">应用</button>
+    </view>
+  </view>
+</view>
+
+<!-- 重命名弹窗 -->
+<view class="modal-overlay" wx:if="{{showRenameModal}}" bind:tap="hideRenameModal">
+  <view class="modal-content" catch:tap="stopPropagation">
+    <view class="modal-title">重命名文件</view>
+    <input class="rename-input" value="{{renameValue}}" bind:input="onRenameInput" 
+           placeholder="请输入新的文件名" />
+    <view class="modal-actions">
+      <button class="modal-btn secondary" bind:tap="hideRenameModal">取消</button>
+      <button class="modal-btn primary" bind:tap="confirmRename">确定</button>
+    </view>
+  </view>
+</view>

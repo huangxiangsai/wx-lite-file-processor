@@ -1,0 +1,201 @@
+/* pages/index/index.wxss */
+.container {
+  padding: 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+}
+
+.header {
+  text-align: center;
+  padding: 80rpx 40rpx 60rpx;
+  color: white;
+}
+
+.logo {
+  width: 120rpx;
+  height: 120rpx;
+  margin-bottom: 30rpx;
+}
+
+.title {
+  font-size: 48rpx;
+  font-weight: bold;
+  margin-bottom: 20rpx;
+}
+
+.subtitle {
+  font-size: 28rpx;
+  opacity: 0.8;
+}
+
+.action-section {
+  background: white;
+  margin: 0 30rpx 40rpx;
+  border-radius: 20rpx;
+  padding: 40rpx;
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.1);
+}
+
+.action-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 40rpx;
+  text-align: center;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 30rpx;
+}
+
+.action-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40rpx 20rpx;
+  border-radius: 16rpx;
+  border: none;
+  font-size: 28rpx;
+  position: relative;
+  overflow: hidden;
+}
+
+.action-btn.primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.action-btn.secondary {
+  background: #f8f9fa;
+  color: #333;
+  border: 2rpx solid #e9ecef;
+}
+
+.btn-icon {
+  width: 60rpx;
+  height: 60rpx;
+  margin-bottom: 20rpx;
+}
+
+.quick-actions {
+  margin: 0 30rpx 40rpx;
+}
+
+.section-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: white;
+  margin-bottom: 30rpx;
+  padding: 0 20rpx;
+}
+
+.recent-files {
+  white-space: nowrap;
+  padding: 0 20rpx;
+}
+
+.recent-file-item {
+  display: inline-block;
+  width: 160rpx;
+  margin-right: 30rpx;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 16rpx;
+  padding: 30rpx 20rpx;
+  backdrop-filter: blur(10rpx);
+}
+
+.file-thumbnail {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 12rpx;
+  margin-bottom: 20rpx;
+}
+
+.file-name {
+  font-size: 24rpx;
+  color: white;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.features-section {
+  background: white;
+  margin: 0 30rpx 40rpx;
+  border-radius: 20rpx;
+  padding: 40rpx;
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.1);
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30rpx;
+}
+
+.feature-item {
+  text-align: center;
+  padding: 30rpx;
+  background: #f8f9fa;
+  border-radius: 16rpx;
+}
+
+.feature-icon {
+  width: 60rpx;
+  height: 60rpx;
+  margin-bottom: 20rpx;
+}
+
+.feature-name {
+  font-size: 28rpx;
+  color: #333;
+}
+
+.stats-section {
+  background: rgba(255, 255, 255, 0.1);
+  margin: 0 30rpx 40rpx;
+  border-radius: 20rpx;
+  padding: 40rpx;
+  backdrop-filter: blur(10rpx);
+}
+
+.stats-section .section-title {
+  color: white;
+}
+
+.stats-grid {
+  display: flex;
+  gap: 40rpx;
+}
+
+.stat-item {
+  flex: 1;
+  text-align: center;
+  color: white;
+}
+
+.stat-number {
+  font-size: 48rpx;
+  font-weight: bold;
+  margin-bottom: 10rpx;
+}
+
+.stat-label {
+  font-size: 24rpx;
+  opacity: 0.8;
+}
+
+/* 响应式设计 */
+@media (max-width: 400px) {
+  .action-buttons {
+    flex-direction: column;
+    gap: 20rpx;
+  }
+  
+  .features-grid {
+    grid-template-columns: 1fr;
+  }
+}

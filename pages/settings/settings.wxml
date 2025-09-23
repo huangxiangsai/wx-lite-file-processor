@@ -1,0 +1,169 @@
+<!--pages/settings/settings.wxml-->
+<view class="container">
+  <view class="header">
+    <view class="title">设置</view>
+  </view>
+
+  <!-- 存储管理 -->
+  <view class="section">
+    <view class="section-title">
+      <image class="section-icon" src="/images/icons/storage.png"></image>
+      <text>存储管理</text>
+    </view>
+    
+    <view class="setting-item">
+      <view class="setting-info">
+        <view class="setting-name">本地文件</view>
+        <view class="setting-desc">{{storageInfo.fileCount}} 个文件</view>
+      </view>
+      <view class="setting-value">{{storageInfo.totalSize}}</view>
+    </view>
+    
+    <view class="setting-item">
+      <view class="setting-info">
+        <view class="setting-name">处理历史</view>
+        <view class="setting-desc">{{storageInfo.historyCount}} 条记录</view>
+      </view>
+      <button class="setting-action" bind:tap="clearHistory">清理</button>
+    </view>
+    
+    <button class="danger-btn" bind:tap="clearAllData">
+      <image class="btn-icon" src="/images/icons/delete.png"></image>
+      <text>清空所有数据</text>
+    </button>
+  </view>
+
+  <!-- 处理设置 -->
+  <view class="section">
+    <view class="section-title">
+      <image class="section-icon" src="/images/icons/settings.png"></image>
+      <text>处理设置</text>
+    </view>
+    
+    <view class="setting-item">
+      <view class="setting-info">
+        <view class="setting-name">图片压缩质量</view>
+        <view class="setting-desc">{{compressionQuality}}%</view>
+      </view>
+      <slider class="quality-slider" 
+              value="{{compressionQuality}}" 
+              min="10" 
+              max="100" 
+              step="10"
+              bind:change="onCompressionQualityChange" />
+    </view>
+    
+    <view class="setting-item">
+      <view class="setting-info">
+        <view class="setting-name">自动保存处理结果</view>
+        <view class="setting-desc">处理完成后自动保存到本地</view>
+      </view>
+      <switch class="setting-switch" 
+             checked="{{autoSave}}" 
+             bind:change="onAutoSaveChange" />
+    </view>
+    
+    <view class="setting-item">
+      <view class="setting-info">
+        <view class="setting-name">处理完成提醒</view>
+        <view class="setting-desc">处理完成后震动提醒</view>
+      </view>
+      <switch class="setting-switch" 
+             checked="{{vibrationEnabled}}" 
+             bind:change="onVibrationChange" />
+    </view>
+  </view>
+
+  <!-- API设置 -->
+  <view class="section">
+    <view class="section-title">
+      <image class="section-icon" src="/images/icons/api.png"></image>
+      <text>API设置</text>
+    </view>
+    
+    <view class="setting-item">
+      <view class="setting-info">
+        <view class="setting-name">服务器地址</view>
+        <view class="setting-desc">{{apiBaseUrl}}</view>
+      </view>
+      <button class="setting-action" bind:tap="editApiUrl">编辑</button>
+    </view>
+    
+    <view class="setting-item">
+      <view class="setting-info">
+        <view class="setting-name">连接状态</view>
+        <view class="setting-desc status-{{apiStatus}}">{{apiStatusText}}</view>
+      </view>
+      <button class="setting-action" bind:tap="testApiConnection">测试</button>
+    </view>
+  </view>
+
+  <!-- 关于 -->
+  <view class="section">
+    <view class="section-title">
+      <image class="section-icon" src="/images/icons/info.png"></image>
+      <text>关于</text>
+    </view>
+    
+    <view class="about-content">
+      <image class="app-logo" src="/images/logo.png" mode="aspectFit"></image>
+      <view class="app-name">文件处理工具</view>
+      <view class="app-version">版本 {{appVersion}}</view>
+      <view class="app-desc">
+        一个功能强大的微信小程序文件处理工具，支持图片压缩、文件解压、格式转换等多种功能。
+      </view>
+    </view>
+    
+    <view class="about-links">
+      <button class="link-btn" bind:tap="showPrivacyPolicy">隐私政策</button>
+      <button class="link-btn" bind:tap="showUserAgreement">用户协议</button>
+      <button class="link-btn" bind:tap="contactSupport">联系客服</button>
+    </view>
+  </view>
+
+  <!-- 使用统计 -->
+  <view class="section" wx:if="{{showStats}}">
+    <view class="section-title">
+      <image class="section-icon" src="/images/icons/chart.png"></image>
+      <text>使用统计</text>
+    </view>
+    
+    <view class="stats-grid">
+      <view class="stat-card">
+        <view class="stat-number">{{stats.totalProcessed}}</view>
+        <view class="stat-label">已处理文件</view>
+      </view>
+      <view class="stat-card">
+        <view class="stat-number">{{stats.totalSaved}}</view>
+        <view class="stat-label">节省空间</view>
+      </view>
+      <view class="stat-card">
+        <view class="stat-number">{{stats.usageDays}}</view>
+        <view class="stat-label">使用天数</view>
+      </view>
+    </view>
+  </view>
+</view>
+
+<!-- API地址编辑弹窗 -->
+<view class="modal-overlay" wx:if="{{showApiUrlModal}}" bind:tap="hideApiUrlModal">
+  <view class="modal-content" catch:tap="stopPropagation">
+    <view class="modal-title">编辑API地址</view>
+    <input class="api-input" 
+           value="{{editingApiUrl}}" 
+           bind:input="onApiUrlInput"
+           placeholder="请输入API服务器地址" />
+    <view class="modal-actions">
+      <button class="modal-btn secondary" bind:tap="hideApiUrlModal">取消</button>
+      <button class="modal-btn primary" bind:tap="saveApiUrl">保存</button>
+    </view>
+  </view>
+</view>
+
+<!-- 加载遮罩 -->
+<view class="loading-overlay" wx:if="{{loading}}">
+  <view class="loading-content">
+    <loading></loading>
+    <view class="loading-text">{{loadingText}}</view>
+  </view>
+</view>

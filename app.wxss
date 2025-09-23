@@ -1,0 +1,105 @@
+/**app.wxss**/
+.container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 200rpx 0;
+  box-sizing: border-box;
+}
+
+/* 通用样式 */
+.btn-primary {
+  background-color: #07c160;
+  color: white;
+  border-radius: 8rpx;
+  padding: 20rpx 40rpx;
+  font-size: 32rpx;
+  border: none;
+}
+
+.btn-secondary {
+  background-color: #f7f7f7;
+  color: #333;
+  border-radius: 8rpx;
+  padding: 20rpx 40rpx;
+  font-size: 32rpx;
+  border: 1rpx solid #e5e5e5;
+}
+
+.file-item {
+  display: flex;
+  align-items: center;
+  padding: 30rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+  background: white;
+}
+
+.file-icon {
+  width: 80rpx;
+  height: 80rpx;
+  margin-right: 30rpx;
+  border-radius: 8rpx;
+}
+
+.file-info {
+  flex: 1;
+}
+
+.file-name {
+  font-size: 32rpx;
+  color: #333;
+  margin-bottom: 10rpx;
+}
+
+.file-meta {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.file-actions {
+  display: flex;
+  gap: 20rpx;
+}
+
+.action-btn {
+  padding: 10rpx 20rpx;
+  font-size: 24rpx;
+  border-radius: 6rpx;
+  border: 1rpx solid #e5e5e5;
+  background: white;
+  color: #666;
+}
+
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.loading-content {
+  background: white;
+  padding: 60rpx;
+  border-radius: 16rpx;
+  text-align: center;
+}
+
+.status-success {
+  color: #07c160;
+}
+
+.status-error {
+  color: #fa5151;
+}
+
+.status-processing {
+  color: #1989fa;
+}

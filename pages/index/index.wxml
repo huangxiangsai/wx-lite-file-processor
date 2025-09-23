@@ -1,0 +1,76 @@
+<!--pages/index/index.wxml-->
+<view class="container">
+  <view class="header">
+    <image class="logo" src="/images/logo.png" mode="aspectFit"></image>
+    <view class="title">文件处理工具</view>
+    <view class="subtitle">压缩、解压、格式转换一站式服务</view>
+  </view>
+
+  <view class="action-section">
+    <view class="action-title">选择文件</view>
+    <view class="action-buttons">
+      <button class="action-btn primary" bind:tap="selectFromChat">
+        <image class="btn-icon" src="/images/icons/chat.png"></image>
+        <text>从聊天记录选择</text>
+      </button>
+      <button class="action-btn secondary" bind:tap="selectFromLocal">
+        <image class="btn-icon" src="/images/icons/folder.png"></image>
+        <text>从本地选择</text>
+      </button>
+    </view>
+  </view>
+
+  <view class="quick-actions" wx:if="{{recentFiles.length > 0}}">
+    <view class="section-title">最近处理的文件</view>
+    <scroll-view class="recent-files" scroll-x="true">
+      <view class="recent-file-item" wx:for="{{recentFiles}}" wx:key="id" bind:tap="openFile" data-file="{{item}}">
+        <image class="file-thumbnail" src="{{item.thumbnail || '/images/icons/file.png'}}" mode="aspectFill"></image>
+        <view class="file-name">{{item.name}}</view>
+      </view>
+    </scroll-view>
+  </view>
+
+  <view class="features-section">
+    <view class="section-title">支持的功能</view>
+    <view class="features-grid">
+      <view class="feature-item">
+        <image class="feature-icon" src="/images/icons/compress.png"></image>
+        <view class="feature-name">图片压缩</view>
+      </view>
+      <view class="feature-item">
+        <image class="feature-icon" src="/images/icons/unzip.png"></image>
+        <view class="feature-name">解压缩</view>
+      </view>
+      <view class="feature-item">
+        <image class="feature-icon" src="/images/icons/pdf.png"></image>
+        <view class="feature-name">PDF转图片</view>
+      </view>
+      <view class="feature-item">
+        <image class="feature-icon" src="/images/icons/convert.png"></image>
+        <view class="feature-name">格式转换</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="stats-section" wx:if="{{stats}}">
+    <view class="section-title">使用统计</view>
+    <view class="stats-grid">
+      <view class="stat-item">
+        <view class="stat-number">{{stats.processedFiles}}</view>
+        <view class="stat-label">已处理文件</view>
+      </view>
+      <view class="stat-item">
+        <view class="stat-number">{{stats.savedSpace}}</view>
+        <view class="stat-label">节省空间</view>
+      </view>
+    </view>
+  </view>
+</view>
+
+<!-- 加载遮罩 -->
+<view class="loading-overlay" wx:if="{{loading}}">
+  <view class="loading-content">
+    <loading></loading>
+    <view class="loading-text">{{loadingText}}</view>
+  </view>
+</view>
