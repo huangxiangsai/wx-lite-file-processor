@@ -1,54 +1,100 @@
 /* pages/settings/settings.wxss */
 .container {
-  background: #f5f5f5;
+  background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%);
   min-height: 100vh;
   padding-bottom: 40rpx;
 }
 
 .header {
-  background: white;
-  padding: 40rpx;
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  padding: 60rpx 40rpx;
   text-align: center;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.08);
+  border-bottom: 1rpx solid rgba(0, 0, 0, 0.05);
+  position: relative;
+  overflow: hidden;
+}
+
+.header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.02) 0%, rgba(118, 75, 162, 0.02) 100%);
 }
 
 .title {
-  font-size: 36rpx;
-  font-weight: bold;
-  color: #333;
+  font-size: 42rpx;
+  font-weight: 700;
+  color: #2c3e50;
+  letter-spacing: 2rpx;
+  position: relative;
+  z-index: 1;
 }
 
 .section {
-  background: white;
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
   margin: 30rpx;
-  border-radius: 20rpx;
-  padding: 40rpx;
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.05);
+  border-radius: 28rpx;
+  padding: 50rpx 40rpx;
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.08);
+  border: 1rpx solid rgba(0, 0, 0, 0.05);
+  position: relative;
+  overflow: hidden;
+}
+
+.section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.01) 0%, rgba(118, 75, 162, 0.01) 100%);
 }
 
 .section-title {
   display: flex;
   align-items: center;
-  font-size: 32rpx;
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 40rpx;
-  padding-bottom: 20rpx;
-  border-bottom: 2rpx solid #f0f0f0;
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #2c3e50;
+  margin-bottom: 45rpx;
+  padding-bottom: 25rpx;
+  border-bottom: 2rpx solid rgba(0, 0, 0, 0.08);
+  position: relative;
+  z-index: 1;
+  letter-spacing: 1rpx;
+}
+
+.section-title::after {
+  content: '';
+  position: absolute;
+  bottom: -2rpx;
+  left: 0;
+  width: 60rpx;
+  height: 4rpx;
+  background: linear-gradient(90deg, #667eea, #764ba2);
+  border-radius: 2rpx;
 }
 
 .section-icon {
-  width: 40rpx;
-  height: 40rpx;
-  margin-right: 20rpx;
+  width: 44rpx;
+  height: 44rpx;
+  margin-right: 25rpx;
+  filter: drop-shadow(0 2rpx 8rpx rgba(0,0,0,0.1));
 }
 
 .setting-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 30rpx 0;
-  border-bottom: 1rpx solid #f8f9fa;
+  padding: 35rpx 0;
+  border-bottom: 1rpx solid rgba(0, 0, 0, 0.05);
+  position: relative;
+  z-index: 1;
 }
 
 .setting-item:last-child {
@@ -57,34 +103,45 @@
 
 .setting-info {
   flex: 1;
-  margin-right: 30rpx;
+  margin-right: 35rpx;
 }
 
 .setting-name {
-  font-size: 32rpx;
-  color: #333;
-  margin-bottom: 10rpx;
+  font-size: 34rpx;
+  color: #2c3e50;
+  margin-bottom: 12rpx;
+  font-weight: 600;
+  letter-spacing: 0.5rpx;
 }
 
 .setting-desc {
-  font-size: 24rpx;
-  color: #999;
-  line-height: 1.4;
+  font-size: 26rpx;
+  color: #6c757d;
+  line-height: 1.5;
+  font-weight: 500;
 }
 
 .setting-value {
-  font-size: 28rpx;
-  color: #666;
-  font-weight: bold;
+  font-size: 30rpx;
+  color: #495057;
+  font-weight: 600;
 }
 
 .setting-action {
-  padding: 16rpx 32rpx;
-  background: #f8f9fa;
-  color: #333;
-  border-radius: 8rpx;
-  border: 1rpx solid #e9ecef;
-  font-size: 24rpx;
+  padding: 20rpx 36rpx;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  color: #495057;
+  border-radius: 16rpx;
+  border: 1rpx solid rgba(233, 236, 239, 0.5);
+  font-size: 26rpx;
+  font-weight: 500;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
+}
+
+.setting-action:active {
+  transform: translateY(1rpx);
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.08);
 }
 
 .setting-switch {
@@ -118,33 +175,42 @@
 
 .about-content {
   text-align: center;
-  padding: 40rpx 0;
+  padding: 50rpx 0;
+  position: relative;
+  z-index: 1;
 }
 
 .app-logo {
-  width: 120rpx;
-  height: 120rpx;
-  margin-bottom: 30rpx;
+  width: 140rpx;
+  height: 140rpx;
+  margin-bottom: 35rpx;
+  border-radius: 28rpx;
+  box-shadow: 0 12rpx 40rpx rgba(0, 0, 0, 0.15);
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  padding: 12rpx;
 }
 
 .app-name {
-  font-size: 36rpx;
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 10rpx;
+  font-size: 40rpx;
+  font-weight: 700;
+  color: #2c3e50;
+  margin-bottom: 15rpx;
+  letter-spacing: 1rpx;
 }
 
 .app-version {
-  font-size: 24rpx;
-  color: #999;
-  margin-bottom: 30rpx;
+  font-size: 26rpx;
+  color: #6c757d;
+  margin-bottom: 35rpx;
+  font-weight: 500;
 }
 
 .app-desc {
-  font-size: 28rpx;
-  color: #666;
-  line-height: 1.6;
-  padding: 0 20rpx;
+  font-size: 30rpx;
+  color: #495057;
+  line-height: 1.7;
+  padding: 0 25rpx;
+  font-weight: 500;
 }
 
 .about-links {
@@ -166,27 +232,57 @@
 .stats-grid {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  gap: 30rpx;
-  margin-top: 20rpx;
+  gap: 25rpx;
+  margin-top: 30rpx;
+  position: relative;
+  z-index: 1;
 }
 
 .stat-card {
   text-align: center;
-  padding: 30rpx 20rpx;
+  padding: 35rpx 25rpx;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 16rpx;
+  border-radius: 24rpx;
   color: white;
+  box-shadow: 0 8rpx 25rpx rgba(102, 126, 234, 0.3);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 100%);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.stat-card:active {
+  transform: translateY(-2rpx);
+  box-shadow: 0 12rpx 35rpx rgba(102, 126, 234, 0.4);
+}
+
+.stat-card:active::before {
+  opacity: 1;
 }
 
 .stat-number {
-  font-size: 36rpx;
-  font-weight: bold;
-  margin-bottom: 10rpx;
+  font-size: 40rpx;
+  font-weight: 700;
+  margin-bottom: 12rpx;
+  text-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.3);
 }
 
 .stat-label {
-  font-size: 24rpx;
-  opacity: 0.9;
+  font-size: 26rpx;
+  opacity: 0.95;
+  font-weight: 500;
+  text-shadow: 0 1rpx 4rpx rgba(0, 0, 0, 0.2);
 }
 
 /* 状态样式 */
