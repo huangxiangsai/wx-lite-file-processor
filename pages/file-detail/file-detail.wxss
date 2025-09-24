@@ -504,8 +504,41 @@
 }
 
 .progress-text {
-  font-size: 22rpx;
-  color: var(--text-secondary);
+  font-size: 24rpx;
+  color: #666;
+}
+
+/* PDF单页转换和密码输入样式 */
+.page-input-section, .password-input-section {
+  margin-bottom: 40rpx;
+}
+
+.input-label {
+  font-size: 28rpx;
+  color: #333;
+  margin-bottom: 20rpx;
+  font-weight: 600;
+}
+
+.page-input, .password-input {
+  width: 100%;
+  padding: 30rpx;
+  border: 2rpx solid #e9ecef;
+  border-radius: 12rpx;
+  font-size: 32rpx;
+  margin-bottom: 15rpx;
+  box-sizing: border-box;
+}
+
+.page-input:focus, .password-input:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 6rpx rgba(102, 126, 234, 0.1);
+}
+
+.input-hint {
+  font-size: 24rpx;
+  color: #6c757d;
+  line-height: 1.4;
 }
 
 /* 状态样式 */

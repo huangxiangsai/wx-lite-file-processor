@@ -22,7 +22,7 @@ App({
 
   globalData: {
     userInfo: null,
-    apiBaseUrl: 'https://your-api-domain.com/api', // 替换为实际API地址
+    apiBaseUrl: 'https://m.devsai.com/api', // 文件处理服务API地址
     supportedFormats: {
       // 本地支持的格式
       local: ['jpg', 'jpeg', 'png', 'gif', 'txt', 'json'],

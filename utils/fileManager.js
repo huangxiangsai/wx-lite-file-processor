@@ -109,27 +109,79 @@ class FileManager {
   /**
    * 远程文件处理
    */
-  async processFileRemotely(file, operation) {
+  async processFileRemotely(file, operation, options = {}) {
     const uploadResult = await this.uploadFile(file)
+    
+    let apiEndpoint
+    let requestData
+    
+    switch (operation) {
+      case 'extract':
+        apiEndpoint = '/extract'
+        requestData = {
+          filename: uploadResult.filename,
+          password: options.password,
+          outputSubDir: options.outputSubDir
+        }
+        break
+      case 'pdf2images':
+        apiEndpoint = '/convert/pdf'
+        requestData = {
+          filename: uploadResult.filename,
+          options: {
+            format: options.format || 'png',
+            quality: options.quality || 85,
+            density: options.density || 150,
+            outputSubDir: options.outputSubDir,
+            pageRange: options.pageRange
+          }
+        }
+        break
+      case 'pdf2single':
+        apiEndpoint = '/convert/pdf/page'
+        requestData = {
+          filename: uploadResult.filename,
+          pageNumber: options.pageNumber || 1,
+          options: {
+            format: options.format || 'png',
+            quality: options.quality || 85
+          }
+        }
+        break
+      case 'doc2images':
+        apiEndpoint = '/convert/doc'
+        requestData = {
+          filename: uploadResult.filename,
+          options: {
+            format: options.format || 'png',
+            quality: options.quality || 85,
+            density: options.density || 150,
+            outputSubDir: options.outputSubDir
+          }
+        }
+        break
+      default:
+        throw new Error(`不支持的操作类型: ${operation}`)
+    }
     
     return new Promise((resolve, reject) => {
       wx.request({
-        url: `${this.apiBaseUrl}/process`,
+        url: `${this.apiBaseUrl}${apiEndpoint}`,
         method: 'POST',
-        data: {
-          fileId: uploadResult.fileId,
-          operation: operation,
-          fileName: file.name,
-          fileType: file.type
+        header: {
+          'content-type': 'application/json'
         },
+        data: requestData,
         success: (res) => {
-          if (res.statusCode === 200) {
+          if (res.statusCode === 200 && res.data) {
             resolve(res.data)
           } else {
-            reject(new Error('处理失败'))
+            reject(new Error(res.data?.message || '处理失败'))
           }
         },
-        fail: reject
+        fail: (err) => {
+          reject(new Error(err.errMsg || '网络请求失败'))
+        }
       })
     })
   }
@@ -144,18 +196,30 @@ class FileManager {
         filePath: file.path,
         name: 'file',
         formData: {
-          fileName: file.name,
-          fileType: file.type
+          originalName: file.name
         },
         success: (res) => {
-          const data = JSON.parse(res.data)
-          if (data.success) {
-            resolve(data)
-          } else {
-            reject(new Error(data.message))
+          try {
+            const data = JSON.parse(res.data)
+            if (res.statusCode === 200 && data.message) {
+              // 服务器返回格式: { message: "文件上传成功", data: { filename: "xxx", ... } }
+              resolve({
+                success: true,
+                filename: data.data.filename,
+                originalName: data.data.originalName,
+                size: data.data.size,
+                uploadPath: data.data.uploadPath
+              })
+            } else {
+              reject(new Error(data.error || '上传失败'))
+            }
+          } catch (error) {
+            reject(new Error('服务器响应格式错误'))
           }
         },
-        fail: reject
+        fail: (err) => {
+          reject(new Error(err.errMsg || '上传失败'))
+        }
       })
     })
   }
@@ -163,10 +227,10 @@ class FileManager {
   /**
    * 下载处理后的文件
    */
-  async downloadProcessedFile(fileId, fileName) {
+  async downloadProcessedFile(downloadUrl, fileName) {
     return new Promise((resolve, reject) => {
       wx.downloadFile({
-        url: `${this.apiBaseUrl}/download/${fileId}`,
+        url: downloadUrl,
         success: (res) => {
           if (res.statusCode === 200) {
             // 保存到本地临时文件
@@ -184,7 +248,77 @@ class FileManager {
             reject(new Error('下载失败'))
           }
         },
-        fail: reject
+        fail: (err) => {
+          reject(new Error(err.errMsg || '下载失败'))
+        }
+      })
+    })
+  }
+
+  /**
+   * 检查API服务器状态
+   */
+  async checkApiStatus() {
+    return new Promise((resolve, reject) => {
+      wx.request({
+        url: `${this.apiBaseUrl}/status`,
+        method: 'GET',
+        timeout: 10000,
+        success: (res) => {
+          if (res.statusCode === 200) {
+            resolve(res.data)
+          } else {
+            reject(new Error(`API服务器响应错误: ${res.statusCode}`))
+          }
+        },
+        fail: (err) => {
+          reject(new Error(err.errMsg || 'API服务器连接失败'))
+        }
+      })
+    })
+  }
+
+  /**
+   * 获取文件信息（用于RAR和PDF）
+   */
+  async getFileInfo(file, type) {
+    const uploadResult = await this.uploadFile(file)
+    
+    let apiEndpoint
+    switch (type) {
+      case 'rar':
+        apiEndpoint = '/extract/info'
+        break
+      case 'pdf':
+        apiEndpoint = '/convert/pdf/info'
+        break
+      case 'doc':
+        apiEndpoint = '/convert/doc/info'
+        break
+      default:
+        throw new Error(`不支持的文件类型: ${type}`)
+    }
+    
+    return new Promise((resolve, reject) => {
+      wx.request({
+        url: `${this.apiBaseUrl}${apiEndpoint}`,
+        method: 'POST',
+        header: {
+          'content-type': 'application/json'
+        },
+        data: {
+          filename: uploadResult.filename
+        },
+        success: (res) => {
+          if (res.statusCode === 200 && res.data) {
+            resolve(res.data)
+          } else {
+            reject(new Error(res.data?.message || '获取文件信息失败'))
+          }
+        },
+        fail: (err) => {
+          reject(new Error(err.errMsg || '网络请求失败'))
+        }
       })
     })
   }

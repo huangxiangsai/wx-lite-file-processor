@@ -289,44 +289,34 @@ Page({
     })
 
     try {
-      const result = await new Promise((resolve, reject) => {
-        wx.request({
-          url: `${this.data.apiBaseUrl}/health`,
-          method: 'GET',
-          timeout: 10000,
-          success: (res) => {
-            if (res.statusCode === 200) {
-              resolve({ success: true, data: res.data })
-            } else {
-              resolve({ success: false, error: `HTTP ${res.statusCode}` })
-            }
-          },
-          fail: (err) => {
-            resolve({ success: false, error: err.errMsg || '网络错误' })
-          }
-        })
-      })
+      // 使用FileManager的API状态检查方法
+      const fileManager = new (require('../../utils/fileManager.js'))()
+      const result = await fileManager.checkApiStatus()
 
       this.setData({ loading: false })
 
-      if (result.success) {
+      if (result && result.data) {
         this.setData({
           apiStatus: 'connected',
           apiStatusText: '连接正常'
         })
-        wx.showToast({
-          title: 'API连接正常',
-          icon: 'success'
+        
+        const { supportedFormats, limits } = result.data
+        let statusInfo = 'API连接正常\n'
+        if (supportedFormats) {
+          statusInfo += `支持格式: ${supportedFormats.extract?.join(', ') || ''} | ${supportedFormats.convert?.join(', ') || ''}\n`
+        }
+        if (limits) {
+          statusInfo += `文件限制: ${limits.maxFileSize || '50MB'}`
+        }
+        
+        wx.showModal({
+          title: 'API连接测试',
+          content: statusInfo,
+          showCancel: false
         })
       } else {
-        this.setData({
-          apiStatus: 'error',
-          apiStatusText: '连接失败'
-        })
-        wx.showToast({
-          title: `连接失败: ${result.error}`,
-          icon: 'none'
-        })
+        throw new Error('API响应格式错误')
       }
     } catch (error) {
       console.error('API连接测试失败:', error)
@@ -335,9 +325,20 @@ Page({
         apiStatus: 'error',
         apiStatusText: '连接失败'
       })
-      wx.showToast({
-        title: '连接测试失败',
-        icon: 'none'
+      
+      let errorMessage = '连接测试失败'
+      if (error.message.includes('timeout')) {
+        errorMessage = '连接超时，请检查网络或API地址'
+      } else if (error.message.includes('网络')) {
+        errorMessage = '网络连接失败，请检查网络设置'
+      } else if (error.message.includes('404')) {
+        errorMessage = 'API地址不正确，请检查URL'
+      }
+      
+      wx.showModal({
+        title: 'API连接失败',
+        content: errorMessage,
+        showCancel: false
       })
     }
   },

@@ -17,7 +17,12 @@ Page({
     processingText: '',
     progress: 0,
     showConvertModal: false,
-    convertOptions: []
+    convertOptions: [],
+    showPdfPageModal: false,
+    selectedPage: 1,
+    pdfPageHint: '请输入要转换的页码',
+    showPasswordModal: false,
+    rarPassword: ''
   },
 
   fileManager: null,
@@ -244,53 +249,67 @@ Page({
     try {
       this.setData({
         processing: true,
-        processingText: '正在解压缩...',
-        progress: 0
+        processingText: '正在上传文件...',
+        progress: 10
       })
 
-      this.simulateProgress()
+      // 先获取RAR文件信息（可选，用于显示文件列表）
+      let rarInfo = null
+      try {
+        this.setData({ processingText: '正在分析文件...' })
+        rarInfo = await this.fileManager.getFileInfo(this.data.fileData, 'rar')
+        console.log('RAR文件信息:', rarInfo)
+      } catch (infoError) {
+        console.warn('获取RAR信息失败:', infoError.message)
+      }
+
+      this.setData({ 
+        processingText: '正在解压缩...',
+        progress: 30
+      })
 
       // 调用远程API处理
-      const result = await this.fileManager.processFileRemotely(this.data.fileData, 'extract')
+      const result = await this.fileManager.processFileRemotely(this.data.fileData, 'extract', {
+        outputSubDir: `extracted_${Date.now()}`
+      })
       
-      if (result.success) {
-        // 下载解压后的文件
-        const extractedFiles = []
-        for (const fileInfo of result.files) {
-          const downloadedFile = await this.fileManager.downloadProcessedFile(fileInfo.id, fileInfo.name)
-          extractedFiles.push(downloadedFile)
-          this.fileManager.saveFileToStorage(downloadedFile)
-        }
-
-        this.recordProcessHistory('extract', true, { 
-          extractedCount: extractedFiles.length 
-        })
-
-        this.setData({ processing: false })
-
-        wx.showModal({
-          title: '解压完成',
-          content: `成功解压 ${extractedFiles.length} 个文件`,
-          showCancel: false,
-          success: () => {
-            wx.switchTab({
-              url: '/pages/file-list/file-list'
-            })
-          }
-        })
-      } else {
-        throw new Error(result.message || '解压失败')
-      }
+      // 使用提取的公共方法处理结果
+      await this.handleExtractResult(result)
 
     } catch (error) {
       console.error('解压失败:', error)
       this.setData({ processing: false })
       this.recordProcessHistory('extract', false, { error: error.message })
       
-      wx.showToast({
-        title: '解压失败',
-        icon: 'none'
-      })
+      // 如果是密码错误，提示输入密码
+      if (error.message.includes('密码') || error.message.includes('password')) {
+        wx.showModal({
+          title: '需要密码',
+          content: '该RAR文件需要密码才能解压',
+          confirmText: '输入密码',
+          cancelText: '取消',
+          success: (res) => {
+            if (res.confirm) {
+              this.showPasswordModal()
+            }
+          }
+        })
+      } else {
+        let errorMessage = '解压失败'
+        if (error.message.includes('网络')) {
+          errorMessage = '网络连接失败，请检查网络'
+        } else if (error.message.includes('格式')) {
+          errorMessage = '文件格式不支持或已损坏'
+        } else if (error.message.includes('大小')) {
+          errorMessage = '文件过大，请选择较小的文件'
+        }
+        
+        wx.showModal({
+          title: '解压失败',
+          content: errorMessage,
+          showCancel: false
+        })
+      }
     }
   },
 
@@ -303,42 +322,107 @@ Page({
     try {
       this.setData({
         processing: true,
-        processingText: '正在转换PDF...',
-        progress: 0
+        processingText: '正在上传PDF文件...',
+        progress: 10
       })
 
-      this.simulateProgress()
+      // 先获取PDF文件信息
+      let pdfInfo = null
+      try {
+        this.setData({ processingText: '正在分析PDF文件...' })
+        pdfInfo = await this.fileManager.getFileInfo(this.data.fileData, 'pdf')
+        console.log('PDF文件信息:', pdfInfo)
+        
+        if (pdfInfo && pdfInfo.data && pdfInfo.data.pageCount) {
+          this.setData({ 
+            processingText: `PDF共${pdfInfo.data.pageCount}页，正在转换...` 
+          })
+        }
+      } catch (infoError) {
+        console.warn('获取PDF信息失败:', infoError.message)
+      }
+
+      this.setData({ 
+        processingText: '正在转换PDF为图片...',
+        progress: 30
+      })
 
       // 调用远程API处理
-      const result = await this.fileManager.processFileRemotely(this.data.fileData, 'pdf2images')
+      const result = await this.fileManager.processFileRemotely(this.data.fileData, 'pdf2images', {
+        format: 'png',
+        quality: 85,
+        density: 150,
+        outputSubDir: `pdf_converted_${Date.now()}`
+      })
       
-      if (result.success) {
-        // 下载转换后的图片
+      this.setData({ progress: 70 })
+
+      if (result && result.data) {
+        this.setData({ processingText: '正在下载转换后的图片...' })
+        
+        // 转换结果包含图片列表和下载信息
         const imageFiles = []
-        for (const imageInfo of result.images) {
-          const downloadedImage = await this.fileManager.downloadProcessedFile(imageInfo.id, imageInfo.name)
-          imageFiles.push(downloadedImage)
-          this.fileManager.saveFileToStorage(downloadedImage)
+        const { images, conversionId, totalPages } = result.data
+        
+        if (images && images.length > 0) {
+          // 逐个下载转换后的图片
+          for (let i = 0; i < images.length; i++) {
+            const imageInfo = images[i]
+            const progress = 70 + (i / images.length) * 25
+            this.setData({ 
+              progress: Math.floor(progress),
+              processingText: `正在下载第${i + 1}页图片...`
+            })
+            
+            try {
+              // 构建下载URL
+              const downloadUrl = `https://m.devsai.com/api/converted-images/${conversionId}/${imageInfo.filename}`
+              const downloadedImage = await this.fileManager.downloadProcessedFile(downloadUrl, imageInfo.filename)
+              
+              // 添加额外信息
+              downloadedImage.originalPdf = this.data.fileData.name
+              downloadedImage.conversionId = conversionId
+              downloadedImage.pageNumber = imageInfo.pageNumber
+              downloadedImage.size = imageInfo.size
+              
+              imageFiles.push(downloadedImage)
+              this.fileManager.saveFileToStorage(downloadedImage)
+            } catch (downloadError) {
+              console.error(`下载图片 ${imageInfo.filename} 失败:`, downloadError)
+            }
+          }
         }
 
         this.recordProcessHistory('pdf2images', true, { 
-          pageCount: imageFiles.length 
+          pageCount: imageFiles.length,
+          conversionId: conversionId,
+          totalPages: totalPages || images.length
         })
 
         this.setData({ processing: false })
 
-        wx.showModal({
-          title: '转换完成',
-          content: `成功转换 ${imageFiles.length} 页图片`,
-          showCancel: false,
-          success: () => {
-            wx.switchTab({
-              url: '/pages/file-list/file-list'
-            })
-          }
-        })
+        if (imageFiles.length > 0) {
+          wx.showModal({
+            title: '转换完成',
+            content: `成功转换 ${imageFiles.length} 页图片`,
+            confirmText: '查看图片',
+            cancelText: '知道了',
+            success: (res) => {
+              if (res.confirm) {
+                wx.switchTab({
+                  url: '/pages/file-list/file-list'
+                })
+              }
+            }
+          })
+        } else {
+          wx.showToast({
+            title: '转换完成，但没有可下载的图片',
+            icon: 'none'
+          })
+        }
       } else {
-        throw new Error(result.message || '转换失败')
+        throw new Error('转换响应格式错误')
       }
 
     } catch (error) {
@@ -346,9 +430,21 @@ Page({
       this.setData({ processing: false })
       this.recordProcessHistory('pdf2images', false, { error: error.message })
       
-      wx.showToast({
+      let errorMessage = 'PDF转换失败'
+      if (error.message.includes('密码')) {
+        errorMessage = 'PDF转换失败，文件可能有密码保护'
+      } else if (error.message.includes('网络')) {
+        errorMessage = '网络连接失败，请检查网络'
+      } else if (error.message.includes('格式')) {
+        errorMessage = 'PDF文件格式不支持或已损坏'
+      } else if (error.message.includes('大小')) {
+        errorMessage = 'PDF文件过大，请选择较小的文件'
+      }
+      
+      wx.showModal({
         title: '转换失败',
-        icon: 'none'
+        content: errorMessage,
+        showCancel: false
       })
     }
   },
@@ -536,6 +632,262 @@ Page({
     
     // 保存timer引用以便清理
     this.progressTimer = timer
+  },
+
+  /**
+   * 显示PDF单页转换选项
+   */
+  showPdfPageOptions() {
+    this.setData({ 
+      showPdfPageModal: true,
+      selectedPage: 1,
+      pdfPageHint: '请输入要转换的页码'
+    })
+  },
+
+  /**
+   * 隐藏PDF单页转换选项
+   */
+  hidePdfPageOptions() {
+    this.setData({ showPdfPageModal: false })
+  },
+
+  /**
+   * 页码输入
+   */
+  onPageInput(e) {
+    const page = parseInt(e.detail.value) || 1
+    this.setData({ selectedPage: page })
+  },
+
+  /**
+   * 转换单页PDF
+   */
+  async convertSinglePage() {
+    const pageNumber = this.data.selectedPage
+    if (pageNumber < 1) {
+      wx.showToast({
+        title: '页码必须大于0',
+        icon: 'none'
+      })
+      return
+    }
+
+    this.hidePdfPageOptions()
+
+    try {
+      this.setData({
+        processing: true,
+        processingText: `正在转换第${pageNumber}页...`,
+        progress: 20
+      })
+
+      // 调用远程API处理单页
+      const result = await this.fileManager.processFileRemotely(this.data.fileData, 'pdf2single', {
+        pageNumber: pageNumber,
+        format: 'png',
+        quality: 85
+      })
+      
+      this.setData({ progress: 80 })
+
+      if (result && result.data) {
+        this.setData({ processingText: '正在下载图片...' })
+        
+        const { filename, downloadUrl } = result.data
+        const downloadedImage = await this.fileManager.downloadProcessedFile(downloadUrl, filename)
+        
+        downloadedImage.originalPdf = this.data.fileData.name
+        downloadedImage.pageNumber = pageNumber
+        
+        this.fileManager.saveFileToStorage(downloadedImage)
+
+        this.recordProcessHistory('pdf2single', true, { 
+          pageNumber: pageNumber 
+        })
+
+        this.setData({ processing: false })
+
+        wx.showModal({
+          title: '转换完成',
+          content: `第${pageNumber}页已转换为图片`,
+          confirmText: '查看图片',
+          cancelText: '知道了',
+          success: (res) => {
+            if (res.confirm) {
+              wx.navigateTo({
+                url: `/pages/file-detail/file-detail?fileId=${downloadedImage.id}`
+              })
+            }
+          }
+        })
+      } else {
+        throw new Error('转换响应格式错误')
+      }
+
+    } catch (error) {
+      console.error('单页转换失败:', error)
+      this.setData({ processing: false })
+      this.recordProcessHistory('pdf2single', false, { 
+        pageNumber: pageNumber,
+        error: error.message 
+      })
+      
+      wx.showToast({
+        title: `第${pageNumber}页转换失败`,
+        icon: 'none'
+      })
+    }
+  },
+
+  /**
+   * 显示密码输入弹窗
+   */
+  showPasswordModal() {
+    this.setData({ 
+      showPasswordModal: true,
+      rarPassword: ''
+    })
+  },
+
+  /**
+   * 隐藏密码输入弹窗
+   */
+  hidePasswordModal() {
+    this.setData({ showPasswordModal: false })
+  },
+
+  /**
+   * 密码输入
+   */
+  onPasswordInput(e) {
+    this.setData({ rarPassword: e.detail.value })
+  },
+
+  /**
+   * 使用密码解压
+   */
+  async extractWithPassword() {
+    const password = this.data.rarPassword.trim()
+    if (!password) {
+      wx.showToast({
+        title: '请输入密码',
+        icon: 'none'
+      })
+      return
+    }
+
+    this.hidePasswordModal()
+
+    try {
+      this.setData({
+        processing: true,
+        processingText: '正在使用密码解压...',
+        progress: 20
+      })
+
+      // 调用远程API处理，带密码
+      const result = await this.fileManager.processFileRemotely(this.data.fileData, 'extract', {
+        password: password,
+        outputSubDir: `extracted_${Date.now()}`
+      })
+      
+      // 后续处理逻辑与普通解压相同
+      this.handleExtractResult(result)
+
+    } catch (error) {
+      console.error('密码解压失败:', error)
+      this.setData({ processing: false })
+      
+      if (error.message.includes('密码') || error.message.includes('password')) {
+        wx.showModal({
+          title: '密码错误',
+          content: '解压密码不正确，请重新输入',
+          confirmText: '重新输入',
+          cancelText: '取消',
+          success: (res) => {
+            if (res.confirm) {
+              this.showPasswordModal()
+            }
+          }
+        })
+      } else {
+        wx.showToast({
+          title: '解压失败',
+          icon: 'none'
+        })
+      }
+    }
+  },
+
+  /**
+   * 处理解压结果（提取公共逻辑）
+   */
+  async handleExtractResult(result) {
+    this.setData({ progress: 70 })
+
+    if (result && result.data) {
+      this.setData({ processingText: '正在下载解压文件...' })
+      
+      const extractedFiles = []
+      const { files, extractionId } = result.data
+      
+      if (files && files.length > 0) {
+        for (let i = 0; i < files.length; i++) {
+          const fileInfo = files[i]
+          const progress = 70 + (i / files.length) * 25
+          this.setData({ 
+            progress: Math.floor(progress),
+            processingText: `正在下载 ${fileInfo.name}...`
+          })
+          
+          try {
+            const downloadUrl = `https://m.devsai.com/api/extracted-files/${extractionId}/${fileInfo.relativePath}`
+            const downloadedFile = await this.fileManager.downloadProcessedFile(downloadUrl, fileInfo.name)
+            
+            downloadedFile.originalArchive = this.data.fileData.name
+            downloadedFile.extractionId = extractionId
+            downloadedFile.size = fileInfo.size
+            
+            extractedFiles.push(downloadedFile)
+            this.fileManager.saveFileToStorage(downloadedFile)
+          } catch (downloadError) {
+            console.error(`下载文件 ${fileInfo.name} 失败:`, downloadError)
+          }
+        }
+      }
+
+      this.recordProcessHistory('extract', true, { 
+        extractedCount: extractedFiles.length,
+        extractionId: extractionId,
+        totalFiles: files.length
+      })
+
+      this.setData({ processing: false })
+
+      if (extractedFiles.length > 0) {
+        wx.showModal({
+          title: '解压完成',
+          content: `成功解压 ${extractedFiles.length} 个文件`,
+          confirmText: '查看文件',
+          cancelText: '知道了',
+          success: (res) => {
+            if (res.confirm) {
+              wx.switchTab({
+                url: '/pages/file-list/file-list'
+              })
+            }
+          }
+        })
+      } else {
+        wx.showToast({
+          title: '解压完成，但没有可下载的文件',
+          icon: 'none'
+        })
+      }
+    } else {
+      throw new Error('解压响应格式错误')
+    }
   },
 
   /**

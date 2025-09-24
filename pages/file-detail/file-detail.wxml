@@ -51,6 +51,13 @@
         <view class="action-desc">按页转换为图片</view>
       </button>
 
+      <!-- PDF单页转换 -->
+      <button class="action-item" wx:if="{{isPdf}}" bind:tap="showPdfPageOptions">
+        <image class="action-icon" src="/images/icons/page.png"></image>
+        <view class="action-name">单页转换</view>
+        <view class="action-desc">转换指定页面</view>
+      </button>
+
       <!-- 格式转换 -->
       <button class="action-item" wx:if="{{canConvert}}" bind:tap="showConvertOptions">
         <image class="action-icon" src="/images/icons/convert.png"></image>
@@ -107,6 +114,39 @@
       </button>
     </view>
     <button class="modal-close" bind:tap="hideConvertOptions">取消</button>
+  </view>
+</view>
+
+<!-- PDF单页转换选项弹窗 -->
+<view class="modal-overlay" wx:if="{{showPdfPageModal}}" bind:tap="hidePdfPageOptions">
+  <view class="modal-content" catch:tap="stopPropagation">
+    <view class="modal-title">PDF单页转换</view>
+    <view class="page-input-section">
+      <view class="input-label">页码</view>
+      <input class="page-input" type="number" value="{{selectedPage}}" 
+             bind:input="onPageInput" placeholder="请输入页码" />
+      <view class="input-hint">{{pdfPageHint}}</view>
+    </view>
+    <view class="modal-actions">
+      <button class="modal-btn secondary" bind:tap="hidePdfPageOptions">取消</button>
+      <button class="modal-btn primary" bind:tap="convertSinglePage">转换</button>
+    </view>
+  </view>
+</view>
+
+<!-- RAR密码输入弹窗 -->
+<view class="modal-overlay" wx:if="{{showPasswordModal}}" bind:tap="hidePasswordModal">
+  <view class="modal-content" catch:tap="stopPropagation">
+    <view class="modal-title">输入RAR密码</view>
+    <view class="password-input-section">
+      <input class="password-input" type="text" value="{{rarPassword}}" 
+             bind:input="onPasswordInput" placeholder="请输入解压密码" password />
+      <view class="input-hint">该RAR文件需要密码才能解压</view>
+    </view>
+    <view class="modal-actions">
+      <button class="modal-btn secondary" bind:tap="hidePasswordModal">取消</button>
+      <button class="modal-btn primary" bind:tap="extractWithPassword">解压</button>
+    </view>
   </view>
 </view>
 
